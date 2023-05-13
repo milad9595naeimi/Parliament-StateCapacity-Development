@@ -1,0 +1,1533 @@
+---
+title: "POL499 Combined Dataset Final Regression Results Final Final"
+author: "Milad Naeimi"
+date: "2023-02-05"
+output: pdf_document
+---
+
+
+
+####Install the necessar libraries
+```{r}
+library(readxl) #Import Excel Files into R
+#install.packages("curl")
+library(curl) #Connection Interface
+library(data.table) #Data Management
+library(tidyr)# Data Management
+library(dplyr)#Data Management
+library(ggplot2)#plot
+library(scales)#Graphical Tools
+library(stringr)#String Manipulation
+#install.packages("haven")
+library(haven)
+#install.packages("stacks")
+library(stacks)
+#install.packages("plyr")
+library(plyr)
+#install.packages("tidyverse")
+library(tidyverse)
+library(dplyr)
+library(ggrepel)
+library(forcats)
+library(scales)
+#install.packages("ggpmisc")                         
+#library("ggpmisc")
+#install.packages("stargazer")
+library(stargazer)
+library(wooldridge)
+library(lmtest)
+library(sandwich)
+library(margins)
+library(car)
+#install.packages('writexl')
+library(writexl)
+library(readr)
+library(data.table)
+#install.packages("fastDummies")
+library(fastDummies)
+#install.packages("scales")
+library(scales)
+#install.packages("naniar")
+library(naniar)
+
+```
+
+
+
+
+####Setting the root File
+```{r}
+getwd()
+setwd("C:/Users/milad/OneDrive/Desktop/University of Toronto/Courses/2022/Fall 2022/Courses/POL499 Thesis/Dataset/Codes/Combined Dataset Final")
+getwd()
+```
+
+####Read Data of the first parliament
+```{r}
+dataset1 <- read.csv("data-First-Majlis-Combined.csv")
+View(dataset1)
+```
+
+####Adding Unique ID Number for Each Observation
+```{r}
+library(tidyverse)
+dataset1 <- tibble::rowid_to_column(dataset1, "index")
+view(dataset1)
+```
+
+####Adding a New Variable for Effectiveness of First Majlis with Value of Zero (As the first Majlis of Iran was less effective than the second one) using mutate function of tidyverse library
+
+```{r}
+library(tidyverse)
+dataset1 <- dataset1 %>%
+  mutate(effective = 0)
+view(dataset1)
+```
+
+####Removing power3 column from the dataset 1
+```{r}
+dataset1 <- subset(dataset1, select = -c(power3))
+view(dataset1)
+```
+
+
+######Importing Datset for the Second Majlis of Iran
+```{r}
+dataset2 <- read.csv("data-Second-Majlis-Combined.csv")
+view(dataset2)
+```
+
+
+####Adding Unique ID Number for Each Observation
+```{r}
+library(tidyverse)
+dataset2 <- tibble::rowid_to_column(dataset2, "index")
+view(dataset2)
+```
+
+
+####Adding a New Variable for Effectiveness of Second Majlis with Value of 1 (As the second Majlis of Iran was more effective than the first one) using mutate function of tidyverse library
+
+```{r}
+library(tidyverse)
+dataset2 <- dataset2 %>%
+  mutate(effective = 1)
+view(dataset2)
+```
+
+
+
+
+
+
+#Visualization of Family Ties of Representatives in the First Parliament (dataset1: Frequency)
+```{r}
+ggplot(dataset1, aes(x=reorder(family_ties1, family_ties1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Family Ties of MPs', x='Family Ties of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6)) + theme(axis.title = element_text(size = 10))
+ggsave("family_ties1_dataset1.png")
+```
+
+
+
+####Manipulating Family Ties of MPs in the First Parliament to Visualize them in a Readable Figure 
+```{r}
+dataset1 <- dataset1 %>%
+mutate(family_ties1 = case_when(
+family_ties1 == 2 ~ "bureaucracy",
+family_ties1 == 1 ~ "indirect.connections.to.crown",
+family_ties1 == 3 ~ "directly.related.but.not.representing.crown",
+family_ties1 == 4 ~ "directly.related.and.representating.crown",
+family_ties1 == 6 ~ "close.relations.with.crown",
+TRUE ~ as.character(family_ties1)
+))
+ggplot(dataset1, aes(x=reorder(family_ties1, family_ties1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Family Ties of MPs', x='Family Ties of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=3.5)) + theme(axis.title = element_text(size = 10))
+ggsave("family_ties1_dataset1_1.png")
+
+```
+
+
+
+####Manipulating Family Ties of MPs in the First Parliament to Visualize their Frequency
+```{r}
+dataset1 <- dataset1 %>%
+mutate(family_ties1 = case_when(
+family_ties1 == "bureaucracy" ~ "Bureaucracy",
+family_ties1 == "clergy" ~ "Clerics",
+family_ties1 == "directly.related.representing.crown" ~ "Prince/Nobility",
+family_ties1 == "directly.related.but.not.representing.crown" ~ "Prince/Nobility",
+family_ties1 == "close.relations.with.crown" ~ "Prince/Nobility",
+family_ties1 == "indirect.connections.to.crown" ~ "Prince/Nobility",
+family_ties1 == "nobility" ~ "Prince/Nobility",
+family_ties1 == "directly.related.and.representating.crown" ~ "Prince/Nobility",
+family_ties1 == "trade_guild" ~ "Trade-Guilds",
+family_ties1 == "large_owner" ~ "Large-Owners",
+family_ties1 == "merchant" ~ "Merchants",
+family_ties1 == "landowner" ~ "Landowner",
+family_ties1 == "service" ~ "Service-Jobs", 
+family_ties1 == "smallholder" ~ "Smallholder",
+TRUE ~ as.character(family_ties1)
+))
+ggplot(dataset1, aes(x=reorder(family_ties1, family_ties1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 2.A: Family Ties of MPs in the First Majlis (1906-1908)', x='Family Ties of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6.5)) + theme(axis.title = element_text(size = 10))
+ggsave("Figure2A.Family.Ties.Second.Majlis.png")
+```
+
+
+
+
+
+
+
+
+#Family Ties of Representatives in the Second Parliament (data-Second-Majlis-Combined)
+```{r}
+ggplot(dataset2, aes(x=reorder(family_ties1, family_ties1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Family Ties of MPs', x='Family Ties of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6)) + theme(axis.title = element_text(size = 10))
+ggsave("family_ties1_dataset2.png")
+```
+
+
+
+
+
+####Manipulating Family Ties of MPs in the Second Parliament to Visualize their Frequency
+```{r}
+dataset2 <- dataset2 %>%
+mutate(family_ties1 = case_when(
+family_ties1 == "bureaucracy" ~ "Bureaucracy",
+family_ties1 == "clergy" ~ "Clerics",
+family_ties1 == "directly.related.representing.crown" ~ "Prince/Nobility",
+family_ties1 == "directly.related.but.not.representing.crown" ~ "Prince/Nobility",
+family_ties1 == "close.relations.with.crown" ~ "Prince/Nobility",
+family_ties1 == "indirect.connections.to.crown" ~ "Prince/Nobility",
+family_ties1 == "indirect.relations.to.crown" ~ "Prince/Nobility",
+family_ties1 == "nobility" ~ "Prince/Nobility",
+family_ties1 == "directly.related.and.representating.crown" ~ "Prince/Nobility",
+family_ties1 == "trade_guild" ~ "Trade-Guilds",
+family_ties1 == "large_owner" ~ "Large-Owners",
+family_ties1 == "merchant" ~ "Merchants",
+family_ties1 == "landowner" ~ "Landowner",
+family_ties1 == "service" ~ "Service-Jobs",
+family_ties1 == "prince" ~ "Prince/Nobility",
+family_ties1 == "smallholder" ~ "Smallholder",
+TRUE ~ as.character(family_ties1)
+))
+ggplot(dataset2, aes(x=reorder(family_ties1, family_ties1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 2.B: Family Ties of MPs in the Second Majlis (1909-1911)', x='Family Ties of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6.5)) + theme(axis.title = element_text(size = 10))
+ggsave("Figure2B.Family.Ties.Second.Majlis.png")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Visualization of Occupations of Representatives in the First Parliament (dataset1: Frequency)
+```{r}
+ggplot(dataset1, aes(x=reorder(Occupation_1, Occupation_1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Occupational Background of MPs in the First Majlis (1906-1908)', x='Occupational Background of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=3)) + theme(axis.title = element_text(size = 10))
+ggsave("Occupation_1_dataset1.png")
+```
+
+
+
+####Manipulating Occupations of MPs in the First Parliament to Visualize them in a Readable Figure 
+```{r}
+dataset1 <- dataset1 %>%
+mutate(Occupation_1 = case_when(
+Occupation_1 == "intellectual (Freemasonary)" ~ "Intellectuals",
+Occupation_1 == "bureaucracy" ~ "Bureaucracy",
+Occupation_1 == "clergy" ~ "Clerics",
+Occupation_1 == "trade_guild" ~ "Trade-Guilds",
+Occupation_1 == "nobility" ~ "Nobility",
+Occupation_1 == "service" ~ "Service-Jobs",
+Occupation_1 == "intellectual" ~ "Intellectuals",
+Occupation_1 == "smallholder" ~ "Smallholders",
+Occupation_1 == "manufacturing" ~ "Manufacturing",
+Occupation_1 == "Sufi" ~ "Clerics",
+Occupation_1 == "landowner" ~ "Landowners",
+Occupation_1 == "merchant" ~ "Merchants",
+Occupation_1 == "large_owner" ~ "Large-Owners",
+TRUE ~ as.character(Occupation_1)
+))
+ggplot(dataset1, aes(x=reorder(Occupation_1, Occupation_1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 1.A: Occupational Background of MPs in the First Majlis (1906-1908)', x='Occupational Background of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=5.5))
+ggsave("Figure1.A.Occupations.First.Majlis.png")
+
+```
+
+
+
+
+
+
+
+
+#Visualization of Occupations of Representatives in the Second Parliament (dataset2: Frequency)
+```{r}
+ggplot(dataset2, aes(x=reorder(Occupation_1, Occupation_1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Occupational Background of MPs in the Second Majlis (1909-1911)', x='Occupational Background of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=5)) + theme(axis.title = element_text(size = 10))
+ggsave("Occupation_1_dataset2.png")
+```
+
+
+
+####Manipulating Occupations of MPs in the Second Parliament to Visualize them in a Readable Figure 
+```{r}
+dataset2 <- dataset2 %>%
+mutate(Occupation_1 = case_when(
+Occupation_1 == "intellectual (Freemasonary)" ~ "Intellectuals",
+Occupation_1 == "bureaucracy" ~ "Bureaucracy",
+Occupation_1 == "clergy" ~ "Clerics",
+Occupation_1 == "trade_guild" ~ "Trade-Guilds",
+Occupation_1 == "nobility" ~ "Nobility",
+Occupation_1 == "service" ~ "Service-Jobs",
+Occupation_1 == "intellectual" ~ "Intellectuals",
+Occupation_1 == "smallholder" ~ "Smallholders",
+Occupation_1 == "manufacturing" ~ "Manufacturing",
+Occupation_1 == "Sufi" ~ "Clerics",
+Occupation_1 == "landowner" ~ "Landowners",
+Occupation_1 == "merchant" ~ "Merchants",
+Occupation_1 == "large_owner" ~ "Large-Owners",
+Occupation_1 == "prince" ~ "Nobility",
+TRUE ~ as.character(Occupation_1)
+))
+ggplot(dataset2, aes(x=reorder(Occupation_1, Occupation_1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 1.B: Occupational Background of MPs in the Second Majlis (1909-1911)', x='Occupational Background of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=5.5))
+ggsave("Figure1.B.Occupations.Second.Majlis.png")
+
+```
+
+
+
+
+
+#Visualization of Prpoerty Ownership of Representatives in the First Parliament (dataset1: Frequency)
+```{r}
+ggplot(dataset1, aes(x=reorder(property_ownership, property_ownership, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Property Ownership of MPs', x='Property Ownership of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6)) + theme(axis.title = element_text(size = 10))
+ggsave("property_ownership_dataset1.png")
+```
+
+
+
+####Manipulating Family Ties of MPs in the First Parliament to Visualize them in a Readable Figure 
+```{r}
+dataset1 <- dataset1 %>%
+mutate(property_ownership = case_when(
+property_ownership == 4 ~ "Small.Urban",
+property_ownership == 1 ~ "Landed.Elite",
+property_ownership == 3 ~ "Large.Urban",
+TRUE ~ as.character(property_ownership)
+))
+ggplot(dataset1, aes(x=reorder(property_ownership, property_ownership, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 3.A: Property Ownership of MPs in the First Majlis (1906-1908)', x='Property Ownership of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6)) + theme(axis.title = element_text(size = 10))
+ggsave("Figure3.A.propertyownership.First.Majlis.png")
+
+```
+
+
+
+
+
+#Visualization of Prpoerty Ownership of Representatives in the Second Parliament (dataset1: Frequency)
+```{r}
+ggplot(dataset2, aes(x=reorder(property_ownership, property_ownership, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Property Ownership of MPs', x='Property Ownership of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6)) + theme(axis.title = element_text(size = 10))
+ggsave("property_ownership_dataset2.png")
+```
+
+
+
+####Manipulating Property Ownership of MPs in the Second Parliament to Visualize them in a Readable Figure 
+```{r}
+dataset2 <- dataset2 %>%
+mutate(property_ownership = case_when(
+property_ownership == 4 ~ "Small.Urban",
+property_ownership == 1 ~ "Landed.Elite",
+property_ownership == 3 ~ "Large.Urban",
+TRUE ~ as.character(property_ownership)
+))
+ggplot(dataset2, aes(x=reorder(property_ownership, property_ownership, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 3.B: Property Ownership of MPs in the Second Majlis (1909-1911)', x='Property Ownership of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6)) + theme(axis.title = element_text(size = 10))
+ggsave("Figure3.B.propertyownership.Second.Majlis.png")
+
+```
+
+
+
+
+# Visualization of Representatives Holding Official Jobs During Pahlavi (1925-1979) for the first Majlis
+```{r}
+ggplot(dataset1, aes(x=reorder(power3, power3, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'MPs Holding Official Jobs During Pahlavi (1925-1979)', x='MPs Holding Official Jobs During Pahlavi') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=5))
+ggsave("power3_Mjalis1.png")
+```
+
+
+
+
+# Visualization of Representatives Holding Official Jobs During Pahlavi (1925-1979) for the Second Majlis
+```{r}
+ggplot(dataset2, aes(x=reorder(power3, power3, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'MPs Holding Official Jobs During Pahlavi (1925-1979)', x='MPs Holding Official Jobs During Pahlavi') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=5))
+ggsave("power3_Majlis2.png")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####Combining the Two Datasets
+```{r}
+dataset <- bind_rows(dataset1, dataset2)
+view(dataset)
+```
+
+
+
+####Export Dataset from R to Excel and CSV
+```{r}
+library(writexl)
+write_xlsx(dataset,"C:/Users/milad/OneDrive/Desktop/University of Toronto/Courses/2022/Fall 2022/Courses/POL499 Thesis/Dataset/Codes/Combined Dataset Final/dataset.xlsx")
+write.csv(dataset,"C:/Users/milad/OneDrive/Desktop/University of Toronto/Courses/2022/Fall 2022/Courses/POL499 Thesis/Dataset/Codes/Combined Dataset Final/dataset.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Property Ownership of all Representatives in dataset
+```{r}
+ggplot(dataset, aes(x=reorder(property_ownership, property_ownership, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Property Ownership of Representaives', x='Property Ownership of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=10))
+ggsave("property_ownership_dataset.png")
+```
+
+
+
+
+
+
+#####Creating Dummy Variables for property ownership using fastDummies library
+```{r}
+dataset <- dummy_cols(dataset, select_columns = "property_ownership")
+view(dataset)
+```
+
+
+
+####Read the New Data for Regression Results
+
+```{r}
+dataset3 <- read.csv("dataset-Regression.csv")
+View(dataset3)
+```
+
+
+
+
+
+
+
+
+#Property Ownership of all Representatives in dataset
+```{r}
+ggplot(dataset3, aes(x=reorder(property_ownership, property_ownership, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Property Ownership of Representaives', x='Property Ownership of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=10))
+ggsave("property_ownership_dataset.png")
+```
+
+
+
+
+
+
+#####Creating Dummy Variables for property ownership using fastDummies library
+```{r}
+dataset3 <- dummy_cols(dataset3, select_columns = "property_ownership")
+view(dataset3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+#Family Ties (first and second) of Representatives in dataset3
+```{r}
+ggplot(dataset3, aes(x=reorder(family_ties1, family_ties1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Family Ties of Representaives', x='Family Ties of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=2))
+ggsave("family_ties_dataset3.png")
+```
+
+
+####Manipulating family_ties1 of the Dataset3
+```{r}
+dataset3 <- dataset3 %>%
+mutate(family_ties_numeric = case_when(
+family_ties1 == "smallholder" ~ 1,
+family_ties1 == "clergy" ~ 2,
+family_ties1 == "trade_guild" ~ 3,
+family_ties1 == "service" ~ 4,
+family_ties1 == "bureaucracy" ~ 5,
+family_ties1 == "merchant" ~ 6,
+family_ties1 == "large_owner" ~ 7,
+family_ties1 == "landowner" ~ 8,
+family_ties1 == "nobility" ~ 9,
+family_ties1 == "close.relations.with.crown" ~ 9,
+family_ties1 == "directly.related.but.not.representing.crown" ~ 9,
+family_ties1 == "directly.related.representing.crown" ~ 9,
+family_ties1 == "indirect.connections.to.crown" ~ 9,
+family_ties1 == "indirect.relations.to.crown" ~ 9,
+family_ties1 == "prince" ~ 9,
+TRUE ~ as.numeric(family_ties1)
+))
+ggplot(dataset3, aes(x=reorder(family_ties_numeric, family_ties_numeric, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Family Ties of Representaives', x='Family Ties of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=7))
+ggsave("family_ties_dataset3_numeric.png")
+```
+
+
+
+
+#####Transforming Family Ties Variable into different Dummy Variables using fastDummies library
+```{r}
+dataset3 <- dummy_cols(dataset3, select_columns = "family_ties_numeric")
+view(dataset3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Ideology of Representatives in dataset3
+```{r}
+ggplot(dataset3, aes(x=reorder(ideology, ideology, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Ideology of Representaives', x='Ideology of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=5))
+ggsave("ideology_dataset3.png")
+```
+
+
+
+
+#####Transforming ideology variable into dummy variables using fastDummies library
+```{r}
+dataset3 <- dummy_cols(dataset3, select_columns = "ideology")
+view(dataset3)
+```
+
+
+
+
+####Manipulating family_ties1 of the Dataset3
+```{r}
+dataset3 <- dataset3 %>%
+mutate(ideology_numeric = case_when(
+ideology == "radical" ~ 1,
+ideology == "liberal" ~ 2,
+ideology == "moderate" ~ 3,
+ideology == "conservative" ~ 4,
+ideology == "royalist" ~ 5,
+TRUE ~ as.numeric(ideology)
+))
+ggplot(dataset3, aes(x=reorder(ideology_numeric, ideology_numeric, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Ideology of Representaives', x='Ideology of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=7))
+ggsave("Ideology_dataset3_numeric.png")
+view(dataset3)
+```
+
+
+
+#####Transforming ideology_numeric variable into dummy variables using fastDummies library
+```{r}
+dataset3 <- dummy_cols(dataset3, select_columns = "ideology_numeric")
+view(dataset3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Literacy (first and second) of Representatives in dataset3
+```{r}
+ggplot(dataset3, aes(x=reorder(literacy, literacy, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Education of Representaives', x='Education of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=5))
+ggsave("education(literacy)_dataset3.png")
+```
+
+
+
+
+#####Transforming occupation_numeric variable into dummy variables using fastDummies library
+```{r}
+dataset3 <- dummy_cols(dataset3, select_columns = "literacy")
+view(dataset3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Territorial Constituency of Representatives in dataset3
+```{r}
+ggplot(dataset3, aes(x=reorder(territorial_constituency, territorial_constituency, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Territorial Constituency of Representaives', x='Territorial Constuency of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=5))
+ggsave("territorial_constituency_dataset3.png")
+```
+
+
+
+
+#####Transforming territorial_constituency variable into a dummy variable for tehran =1 and for others=0
+```{r}
+dataset3$territorial_constituency_tehran <- ifelse(dataset3$territorial_constituency == "tehran", 1,0)
+view(dataset3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Occupations (first and second) of Representatives in dataset3
+```{r}
+ggplot(dataset3, aes(x=reorder(Occupation_1, Occupation_1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Occupations of Representaives', x='Occupations of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=5))
+ggsave("occupations_dataset3.png")
+```
+
+
+
+####Manipulating Occupations of the Dataset3
+```{r}
+dataset3 <- dataset3 %>%
+mutate(Occupation_numeric = case_when(
+Occupation_1 == "smallholder" ~ 1,
+Occupation_1 == "clergy" ~ 2,
+Occupation_1 == "Sufi" ~ 2,
+Occupation_1 == "trade_guild" ~ 3,
+Occupation_1 == "intellectual" ~ 4,
+Occupation_1 == "service" ~ 5,
+Occupation_1 == "bureaucracy" ~ 6,
+Occupation_1 == "merchant" ~ 7,
+Occupation_1 == "large_owner" ~ 8,
+Occupation_1 == "manufacturing" ~8,
+Occupation_1 == "landowner" ~ 9,
+Occupation_1 == "nobility" ~ 10,
+Occupation_1 == "prince" ~ 10,
+TRUE ~ as.numeric(Occupation_1)
+))
+ggplot(dataset3, aes(x=reorder(Occupation_numeric, Occupation_numeric, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Occupations of Representaives', x='Occupations of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=7))
+ggsave("Occupation_dataset3_numeric.png")
+```
+
+
+
+#####Transforming occupation_numeric variable into dummy variables using fastDummies library
+```{r}
+dataset3 <- dummy_cols(dataset3, select_columns = "Occupation_numeric")
+view(dataset3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####Regression Results
+
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament (family ties)
+```{r}
+ols_1 <- lm(effective ~ family_ties_numeric_9 + family_ties_numeric_8 + family_ties_numeric_7 + family_ties_numeric_6 + family_ties_numeric_5 + family_ties_numeric_4 + family_ties_numeric_3 + family_ties_numeric_2 + family_ties_numeric_1, data = dataset3)
+summary(ols_1)
+ols_2 <- coeftest(ols_1, vcov = vcovHC(ols_1, "HC0"))
+summary(ols_2)
+```
+
+
+
+#### OLS Regression of Family Ties on effectiveness of parliament (family ties), with ideology as control variable
+```{r}
+ols_3 <- lm(effective ~ family_ties_numeric_9 + family_ties_numeric_8 + family_ties_numeric_7 + family_ties_numeric_6 + family_ties_numeric_5 + family_ties_numeric_4 + family_ties_numeric_3 + family_ties_numeric_2 + family_ties_numeric_1 + ideology_numeric_5 + ideology_numeric_4 + ideology_numeric_3 + ideology_numeric_2 + ideology_numeric_1, data = dataset3)
+summary(ols_2)
+ols_4 <- coeftest(ols_3, vcov = vcovHC(ols_3, "HC0"))
+summary(ols_3)
+```
+
+
+
+
+
+
+####Report the Regression Results in a Table 2 (Family Ties) with the inclusion of control Variable of Ideology
+```{r}
+stargazer(ols_2, ols_4, type = "html",
+          dep.var.labels = c("Effectiveness of Parliament"), title = "Table 2: Regression Results of Relationship Between Family Ties and Effectiveness of Parliament",
+          covariate.labels = c("Princes, Nobeles, and Direct and Indirect Relations to the Crown", "Landowners", "Large Owners", "Merchants", "Bureaucrats", "Service Jobs", "Trade Guilds", "Clerics", "Conservatives", "Moderates", "Liberals", "Radicals"),
+          notes = "Reference Categories: 1: Smallholders for Occupations variable. 2: Royalists for Ideology variable", out = "Table2.html")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament
+```{r}
+ols_5 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1, data = dataset3)
+summary(ols_5)
+coeftest(ols_5, vcov = vcovHC(ols_5, "HC0"))
+ols_6 <- coeftest(ols_5, vcov = vcovHC(ols_5, "HC0"))
+summary(ols_6)
+```
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament with inclusion of Ideology as a Control Variable
+```{r}
+ols_7 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1  + ideology_numeric_5 + ideology_numeric_4 + ideology_numeric_3 + ideology_numeric_2 + ideology_numeric_1, data = dataset3)
+summary(ols_7)
+coeftest(ols_7, vcov = vcovHC(ols_7, "HC0"))
+ols_8 <- coeftest(ols_7, vcov = vcovHC(ols_7, "HC0"))
+summary(ols_8)
+```
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament with inclusion of Literacy as a Control Variables
+```{r}
+ols_9 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1 + literacy_1 + literacy_2 + literacy_3 + literacy_4, data = dataset3)
+summary(ols_9)
+coeftest(ols_9, vcov = vcovHC(ols_9, "HC0"))
+ols_10 <- coeftest(ols_9, vcov = vcovHC(ols_9, "HC0"))
+summary(ols_10)
+```
+
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament with inclusion of territorial constituency as a Control Variables
+```{r}
+ols_11 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1  + territorial_constituency_tehran, data = dataset3)
+summary(ols_11)
+coeftest(ols_11, vcov = vcovHC(ols_11, "HC0"))
+ols_12 <- coeftest(ols_11, vcov = vcovHC(ols_11, "HC0"))
+summary(ols_12)
+```
+
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament with inclusion of ideology and literacy as Control Variables
+```{r}
+ols_13 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1  + ideology_numeric_5 + ideology_numeric_4 + ideology_numeric_3 + ideology_numeric_2 + ideology_numeric_1 + literacy_1 + literacy_2 + literacy_3 + literacy_4, data = dataset3)
+summary(ols_13)
+coeftest(ols_13, vcov = vcovHC(ols_13, "HC0"))
+ols_14 <- coeftest(ols_13, vcov = vcovHC(ols_13, "HC0"))
+summary(ols_14)
+```
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament with inclusion of ideology and territorial constituency as Control Variables
+```{r}
+ols_15 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1  + ideology_numeric_5 + ideology_numeric_4 + ideology_numeric_3 + ideology_numeric_2 + ideology_numeric_1 + territorial_constituency_tehran, data = dataset3)
+summary(ols_15)
+coeftest(ols_15, vcov = vcovHC(ols_15, "HC0"))
+ols_16 <- coeftest(ols_15, vcov = vcovHC(ols_15, "HC0"))
+summary(ols_16)
+```
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament with inclusion of literacy and territorial constituency as Control Variables
+```{r}
+ols_17 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1 + literacy_1 + literacy_2 + literacy_3 + literacy_4 + territorial_constituency_tehran, data = dataset3)
+summary(ols_17)
+coeftest(ols_17, vcov = vcovHC(ols_17, "HC0"))
+ols_18 <- coeftest(ols_17, vcov = vcovHC(ols_17, "HC0"))
+summary(ols_18)
+```
+
+
+
+#### OLS Regression of occupation on effectiveness of parliament wuth inclusion of ideology, literacy, and territorial constituency as control variables
+```{r}
+ols_19 <- lm(effective ~ Occupation_numeric_10 + Occupation_numeric_9 + Occupation_numeric_8 + Occupation_numeric_7 + Occupation_numeric_6 + Occupation_numeric_5 + Occupation_numeric_4 + Occupation_numeric_3 + Occupation_numeric_2 + Occupation_numeric_1  + ideology_numeric_5 + ideology_numeric_4 + ideology_numeric_3 + ideology_numeric_2 + ideology_numeric_1 + literacy_1 + literacy_2 + literacy_3 + literacy_4 + territorial_constituency_tehran, data = dataset3)
+summary(ols_19)
+coeftest(ols_19, vcov = vcovHC(ols_19, "HC0"))
+ols_20 <- coeftest(ols_19, vcov = vcovHC(ols_19, "HC0"))
+summary(ols_20)
+```
+
+
+
+####Report the Descriptive Statistics of the Data in Table 1
+```{r}
+stargazer(dataset3 [c("Occupation_numeric_1", "Occupation_numeric_2","Occupation_numeric_3","Occupation_numeric_4","Occupation_numeric_5", "Occupation_numeric_6","Occupation_numeric_7","Occupation_numeric_8","Occupation_numeric_9","Occupation_numeric_10")], type = "html", title = "Table 1: Descriptive Statistics", digits = 0, if(<0), out = "table1.html")
+```
+
+
+
+
+
+####Report the Regression Results in a Table 1 (Occupations)
+```{r}
+stargazer (ols_6, ols_8, ols_10, ols_12, ols_14, ols_16, ols_18, ols_20, type = "html",
+          dep.var.labels = c("Effectiveness of Parliament"), title = "Table 1: Regression Results of Relationship Between Occupations of MPs and Effectiveness of Parliament",
+          covariate.labels = c("Princes and Nobels", "Landowners", "Large Owners and Manufacturers", "Merchants", "Bureaucrats", "Service Jobs", "Intellectuals", "Trade Guilds", "Clerics", "Conservatives (Ideology)", "Moderates (Ideology)", "Liberals (Ideology)", "Radicals (Ideology)", "Low Education", "Moderate Education (Including Religious)", "Higher Education", "Tehran (Capital City) Dummy"), 
+          notes = "Reference Categories. 1: Smallholders for Occupations variable. 2: Royalists for Ideology variable. 3: Higher Religious Education for Education variable",
+          out = "Table1.html")
+```
+
+
+
+#### OLS Regression of Property Ownership on effectiveness of parliament
+```{r}
+ols_21 <- lm(effective ~ property_ownership_1 + property_ownership_3 + property_ownership_4, data = dataset3)
+summary(ols_21)
+coeftest(ols_21, vcov = vcovHC(ols_21, "HC0"))
+ols_22 <- coeftest(ols_21, vcov = vcovHC(ols_21, "HC0"))
+summary(ols_22)
+```
+
+
+####Report the Regression Results in a Table 1 (Occupations)
+```{r}
+stargazer (ols_22, type = "html",
+          dep.var.labels = c("Effectiveness of Parliament"), title = "Table 3: Regression Results of Relationship Between Property Ownership of MPs and Effectiveness of Parliament",
+          covariate.labels = c("Landed Elites", "Large Urban Owners"), 
+           keep.stat = c("n", "rsq"), notes = "Reference Category omitted: Small Urban Owners such as Trade Guilds",
+          out = "Table3.html")
+```
+
+
+
+#### OLS Regression of Property Ownership on effectiveness of parliament using dataset not dataset3 which consists of a lot of NA values
+```{r}
+ols_23 <- lm(effective ~ property_ownership_1 + property_ownership_3 + property_ownership_4, data = dataset3)
+summary(ols_23)
+coeftest(ols_23, vcov = vcovHC(ols_23, "HC0"))
+ols_24 <- coeftest(ols_23, vcov = vcovHC(ols_23, "HC0"))
+summary(ols_24)
+```
+
+
+####Report the Regression Results in a Table 1 (Occupations)
+```{r}
+stargazer (ols_22, type = "html",
+          dep.var.labels = c("Effectiveness of Parliament"), title = "Table 3: Regression Results of Relationship Between Property Ownership of MPs and Effectiveness of Parliament",
+          covariate.labels = c("Landed Elites", "Large Urban Owners"), 
+          notes = "Reference Category omitted: Small Urban Owners such as Trade Guilds",
+          out = "Table3.html")
+```
+
+
+
+
+
+####Export Dataset from R to Excel and CSV
+```{r}
+library(writexl)
+write_xlsx(dataset3,"C:/Users/milad/OneDrive/Desktop/University of Toronto/Courses/2022/Fall 2022/Courses/POL499 Thesis/Dataset/Codes/Combined Dataset Final/dataset3.xlsx")
+write.csv(dataset3,"C:/Users/milad/OneDrive/Desktop/University of Toronto/Courses/2022/Fall 2022/Courses/POL499 Thesis/Dataset/Codes/Combined Dataset Final/dataset3.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####Generating Additional Figures
+
+####Read Data for the First Majlis
+```{r}
+dataset3 <- read.csv("data-First-Majlis.csv")
+View(dataset3)
+
+```
+
+
+
+# Representatives Holding Official Jobs Before Revolution for the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(power1, power1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 4.A: MPs Holding Official Jobs Before Revolution in the First Majlis', x='MPs Holding Official Jobs Before Revolution') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6))+  scale_x_discrete(labels=c("Less Than Ministerial Level", "Not Holding Official Jobs", "At Ministerial Level"))
+ggsave("Figure4.A.power1_Majlis1.png")
+```
+
+
+
+# Representatives Holding Official Jobs After Revolution (1906-1925)
+```{r}
+ggplot(dataset3, aes(x=reorder(power2, power2, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 5.A: MPs Holding Official Jobs After Revolution (1906-1925) in the First Majlis', x='MPs Holding Official Jobs After Revolution') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6)) + scale_x_discrete(labels=c("At Ministerial Level", "Not Holding Official Jobs", "Less Than Ministerial Level"))
+ggsave("Figure5.A.power2_Majlis1.png")
+```
+
+
+
+
+# Representatives Holding Official Jobs During Pahlavi (1925-1979)
+```{r}
+ggplot(dataset3, aes(x=reorder(power3, power3, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 6.A: MPs in First Majlis Holding Official Jobs During Pahlavi (1925-1979)', x='MPs Holding Official Jobs During Pahlavi') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6)) + scale_x_discrete(labels=c("At Ministerial Level","Less Than Ministerial Level", "Died Before Pahlavi", "Not Holding Official Jobs"))
+ggsave("Figure6.A.power3_Majlis1.png")
+```
+
+
+# Representatives Who Changed Their Opinion About Revolution in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(change_idea, change_idea, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 7.A: MPs in the First Majlis Who Changed Their Opinion About Revolution', x='Number of MPs Who Changed Their Opinion About Revolution') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6)) + scale_x_discrete(labels=c("Have Not Changed Their Opinion", "Have Changed Their Opinion"))
+ggsave("Figure7.A.change_idea_Majlis1.png")
+```
+
+
+#Visualization of Functional Constituency of Representatives in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(functional_constituency, functional_constituency, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 8: Functional Constituency of Representaives in the First Majlis', x='Functional Constituency of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=3))
+ggsave("Figure8.functional_constituency_Majlis1.png")
+```
+
+###Manipulating the functional Constituency Variables to make it readable in the Figure
+```{r}
+dataset3 <- dataset3 %>% 
+  mutate(functional_constituency = case_when(functional_constituency == "religious_minority_Zartoshti"   ~ "Zoroastrians",
+                           functional_constituency == "religious_minority_Aramaneh"   ~ "Christians",
+                           functional_constituency == "religious_minority_Jewish" ~ "Jewish",
+                           TRUE ~ as.character(functional_constituency)))
+view(dataset3)
+```
+
+
+
+#Now, Data are ready for Better Visualization of Functional Constituency of Representatives in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(functional_constituency, functional_constituency, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 8: Functional Constituency of Representaives in the First Majlis', x='Functional Constituency of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6))
+ggsave("Figure8.functional_constituency_Majlis1.png")
+```
+
+
+#Visualization of Electoral System in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(electoral_system, electoral_system, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 9.A: Eletoral Syatem in the First Majlis', x='Electoral Syatem') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6))
+ggsave("Figure9.A.eletoral_system_Majlis1.png")
+```
+
+
+#Literacy Level of Representatives in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(literacy, literacy, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 10.A: Educational Level of Representatives in the First Majlis', x='Educational Level of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) +  scale_x_discrete(labels=c("Moderate and High Education (High School & University)", "Low Education")) + theme(axis.text = element_text(size=6))
+ggsave("Figure10.A.literacy_Majlis1.png")
+```
+
+
+#Transforming Ratio Data into Nominal Data (family_ties1)
+```{r}
+library(naniar)
+dataset3 <- dataset3 %>% 
+  mutate(literacy = case_when(literacy == 1 ~ 1,
+                              literacy == 2 ~ 2,
+                              literacy == 3 ~ 3,
+                              literacy == 4 ~ 4,
+                              TRUE~ NA))
+dataset3 <- dataset3 %>%
+  mutate(literacy=ifelse(literacy>4 | literacy<0, NA, literacy))
+dataset3 <- dataset3 %>%
+  replace_na(replace = list(literacy=NA))
+dataset3 <- dataset3 %>%
+  replace_with_na_all(condition = ~.x %in% common_na_strings)
+dataset3 %>%
+  replace_with_na_if(.predicate = is.character,
+                     condition = ~.x %in% ("NA"))
+dataset3 %>% 
+  replace_with_na_at(.vars = c("literacy"),
+                     condition = ~ exp(.x) > 4)
+dataset3 <- dataset3 %>% dplyr::na_if(x = ., literacy = na_strings)
+ view(dataset3)
+```
+
+
+
+#Visualization of the territorial Constituency of Representatives in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(territorial_constituency, territorial_constituency, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Territorial Constituency of Representaives', x='Territorial Constituency of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=2.5))
+ggsave("territorial_constituency_Majlis1.png")
+```
+
+
+#####Transforming territorial_constituency variable into a dummy variable for tehran =1 and for others=0
+```{r}
+dataset3$territorial_constituency_tehran <- ifelse(dataset3$territorial_constituency == "tehran", 1,0)
+view(dataset3)
+```
+
+
+
+#Visualization of the territorial Constituency of Representatives in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(territorial_constituency_tehran, territorial_constituency_tehran, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 11.A: Territorial Constituency of MPs in the First Majlis', x='Territorial Constituency of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) +  scale_x_discrete(labels=c("Tehran", "Other Provinces")) + theme(axis.text = element_text(size=6))
+ggsave("Figure11.A.territorial_constituency_Majlis1.png")
+```
+
+
+#Visualization of Ideology of Representatives in the First Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(ideology, ideology, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 12.A: Ideology of Representatives in the First Majlis', x='Ideology of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) 
+ggsave("Figure12.A.ideology_Majlis1.png")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####Read Data for the Second Majlis
+```{r}
+dataset4 <- read.csv("data-Second-Majlis.csv")
+View(dataset4)
+
+```
+
+
+
+# Representatives Holding Official Jobs Before Revolution for the Second Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(power1, power1, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 4.B: MPs Holding Official Jobs Before Revolution in the Second Majlis', x='MPs Holding Official Jobs Before Revolution') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6))+  scale_x_discrete(labels=c("Less Than Ministerial Level", "Not Holding Official Jobs", "At Ministerial Level"))
+ggsave("Figure4.B.power1_Majlis2.png")
+```
+
+
+
+# Representatives Holding Official Jobs After Revolution (1906-1925) for the Second Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(power2, power2, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 5.B: MPs Holding Official Jobs After Revolution (1906-1925) in the Second Majlis', x='MPs Holding Official Jobs After Revolution') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6)) + scale_x_discrete(labels=c("At Ministerial Level","Less Than Ministerial Level", "Not Holding Official Jobs"))
+ggsave("Figure5.B.power2_Majlis2.png")
+```
+
+
+
+
+# Representatives Holding Official Jobs During Pahlavi (1925-1979) for the Second Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(power3, power3, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 6.B: MPs in Second Majlis Holding Official Jobs During Pahlavi (1925-1979)', x='MPs Holding Official Jobs During Pahlavi') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6)) + scale_x_discrete(labels=c("At Ministerial Level","Less Than Ministerial Level", "Died Before Pahlavi", "Not Holding Official Jobs"))
+ggsave("Figure6.B.power3_Majlis2.png")
+```
+
+
+# Representatives Who Changed Their Opinion About Revolution in the Second Majlis
+```{r}
+ggplot(dataset3, aes(x=reorder(change_idea, change_idea, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 7.B: MPs in the Second Majlis Who Changed Their Opinion About Revolution', x='Number of MPs Who Changed Their Opinion About Revolution') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25)+ theme(axis.text = element_text(size=6)) + scale_x_discrete(labels=c("Have Not Changed Their Opinion", "Have Changed Their Opinion"))
+ggsave("Figure7.B.change_idea_Majlis2.png")
+```
+
+
+#Visualization of Electoral System in the Second Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(electoral_system, electoral_system, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 9.B: Electoral Syatem in the Second Majlis', x='Electoral Syatem') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6))
+ggsave("Figure9.B.eletoral_system_Majlis2.png")
+```
+
+####Manipulating Electoral System in the Second Majlis for Better Visualization (Change Functioanl to Minorities)
+```{r}
+dataset4 <- dataset4 %>%
+mutate(electoral_system = case_when(
+electoral_system == "functional" ~ "Minorities",
+electoral_system == "replaced" ~ "Replaced",
+electoral_system == "two-tier" ~ "Two-Tier",
+TRUE ~ as.character(electoral_system)))
+```
+
+
+#Visualization of Electoral System in the Second Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(electoral_system, electoral_system, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 9.B: Electoral Syatem in the Second Majlis', x='Electoral Syatem') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=6))
+ggsave("Figure9.B.eletoral_system_Majlis2.png")
+```
+
+
+#Literacy Level of Representatives in the First Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(literacy, literacy, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 10.B: Educational Level of Representatives in the Second Majlis', x='Educational Level of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) 
+ggsave("Figure10.B.literacy_Majlis2.png")
+```
+
+
+####Manipulating Education Variable for the Second Majlis for Better Visualization
+```{r}
+dataset4 <- dataset4 %>%
+mutate(literacy = case_when(
+literacy == 0 ~ "Illiterate",
+literacy == 1 ~ "Low_Education",
+literacy == 2 ~ "Moderate_Education",
+literacy == 3 ~ "Higher_Education",
+literacy == 4 ~ "Higher_Religious",
+TRUE ~ as.character(literacy)))
+```
+
+
+#Literacy Level of Representatives in the First Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(literacy, literacy, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 10.B: Educational Level of Representatives in the Second Majlis', x='Educational Level of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) +  scale_x_discrete(labels=c("Moderate Education (High School)", "Higher Education", "Higher Religious Education (Higher Status Clerics)")) + theme(axis.text = element_text(size=6))
+ggsave("Figure10.B.literacy_Majlis2.png")
+```
+
+
+#Visualization of the territorial Constituency of Representatives in the First Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(territorial_constituency, territorial_constituency, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Territorial Constituency of Representaives', x='Territorial Constituency of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) + theme(axis.text = element_text(size=2.5))
+ggsave("territorial_constituency_Majlis2.png")
+```
+
+
+#####Transforming territorial_constituency variable into a dummy variable for tehran =1 and for others=0
+```{r}
+dataset4$territorial_constituency_tehran <- ifelse(dataset4$territorial_constituency == "tehran", 1,0)
+view(dataset4)
+```
+
+
+
+#Visualization of the territorial Constituency of Representatives in the First Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(territorial_constituency_tehran, territorial_constituency_tehran, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 11.B: Territorial Constituency of MPs in the Second Majlis', x='Territorial Constituency of MPs') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) +  scale_x_discrete(labels=c("Other Provinces", "Tehran")) + theme(axis.text = element_text(size=6))
+ggsave("Figure11.B.territorial_constituency_Majlis2.png")
+```
+
+
+#Visualization of Ideology of Representatives in the First Majlis
+```{r}
+ggplot(dataset4, aes(x=reorder(ideology, ideology, function(x)-length(x)))) +
+  geom_bar(fill='steelblue') +
+  labs(title= 'Figure 12.B: Ideology of Representatives in the Second Majlis', x='Ideology of Representatives') +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.25) 
+ggsave("Figure12.B.ideology_Majlis2.png")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
